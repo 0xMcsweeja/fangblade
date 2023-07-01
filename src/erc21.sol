@@ -1,5 +1,5 @@
 /*
-Project: Optimized ERC20 Token (ERC21)
+Project: ERC20 Assembly
 
 This project aims to implement an ERC20 token using Solidity assembly for efficiency. 
 The ERC21 token has the same interfaces as ERC20 but implemented with assembly code where possible. 
@@ -115,35 +115,3 @@ contract ERC21 {
 
 
 }
-
-
-/*
-Sure, here's a revised version that includes some concepts related to the Ethereum Virtual Machine's (EVM) data handling:
-
-| Item | Description | Size |
-|------|-------------|------|
-| `uint` | Unsigned integer | 32 bytes (256 bits) |
-| `address` | Holds an Ethereum address | 20 bytes |
-| `bool` | Boolean, can be either true or false | 1 byte |
-| `bytes32` | Fixed-size byte array | 32 bytes |
-| `bytes` | Dynamically-sized byte array | Varies |
-| `mapping` | Holds key-value pairs | Varies |
-| `Word` | EVM's natural unit of data storage and manipulation | 32 bytes (256 bits) |
-| `Slot` | The smallest unit of storage that can be directly addressed | 32 bytes (256 bits) |
-| `Storage Slot` | Slot in the blockchain's state storage (for state variables) | 32 bytes (256 bits) |
-| `Memory Slot` | Slot in the EVM's memory space (for function variables and arguments) | 32 bytes (256 bits) |
-
-And here are some common conversions in the Ethereum world:
-
-| Item | Size in bytes | Size in hexadecimal |
-|------|---------------|---------------------|
-| `uint` (unsigned integer) | 32 bytes | 0x20 |
-| `address` (Ethereum address) | 20 bytes | 0x14 |
-| `bytes32` (fixed-size byte array) | 32 bytes | 0x20 |
-| `1` (as a number) | 1 byte | 0x01 |
-| `32` (as a number) | 1 byte | 0x20 |
-| `64` (as a number) | 1 byte | 0x40 |
-
-Hope this helps! Please let me know if you need any other information.
-
- */
