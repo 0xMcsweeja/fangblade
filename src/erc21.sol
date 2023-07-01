@@ -8,7 +8,7 @@ This project serves as a learning tool to understand low-level Ethereum Virtual 
 - [x] `balanceOf`
 - [x] `transfer`
 - [x] `totalSupply`
-- [ ] `approve`
+- [x] `approve`
 - [ ] `allowance`
 - [ ] `transferFrom`
 - [ ] `increaseAllowance`
