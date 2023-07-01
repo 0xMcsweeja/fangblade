@@ -1,6 +1,15 @@
 # ERC20 written in assembly 
 This repository contains the source code for an ERC20 token implemented in Solidity with an emphasis on using assembly for efficiency. It serves as a learning tool to understand low-level Ethereum Virtual Machine (EVM) operations and their gas efficiency.
 
+- [x] `balanceOf`
+- [x] `transfer`
+- [x] `totalSupply`
+- [x] `approve`
+- [ ] `allowance`
+- [ ] `transferFrom`
+- [ ] `increaseAllowance`
+- [ ] `decreaseAllowance`
+
 ## Table of Contents
 
 - [ERC20 written in assembly](#erc20-written-in-assembly)
