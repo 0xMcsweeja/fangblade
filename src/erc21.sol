@@ -5,6 +5,15 @@ This project aims to implement an ERC20 token using Solidity assembly for effici
 The ERC21 token has the same interfaces as ERC20 but implemented with assembly code where possible. 
 This project serves as a learning tool to understand low-level Ethereum Virtual Machine (EVM) operations and their gas efficiency.
 
+- [x] `balanceOf`
+- [x] `transfer`
+- [x] `totalSupply`
+- [ ] `approve`
+- [ ] `allowance`
+- [ ] `transferFrom`
+- [ ] `increaseAllowance`
+- [ ] `decreaseAllowance`
+
 Storage Layout:
 -------------------
 |   Slot   |  Description  |
@@ -17,7 +26,8 @@ pragma solidity ^0.8.0;
 
 contract ERC21 {
     uint256 private constant _BALANCES_POSITION = 0x02;
-    uint256 private _totalSupply;
+    uint256 private constant _ALLOWANCES_POSITION = 0x03;
+    uint256 private _TOTAL_SUPPLY_POSITION;
 
     /*
     Assembly logic:
@@ -70,36 +80,79 @@ contract ERC21 {
     */
     function transfer(address recipient, uint256 amount) public returns (bool) {
         assembly {
-            // The 'caller' operation gives the address of the sender.
-            // Store this address in memory at position 0x0.
+            // Get the address of the sender
             let senderAdr := caller()
-            sstore(0x00, senderAdr)
+            
+            // Hash the sender's address with the balances position to get the storage slot
+            mstore(0x0, senderAdr)
+            mstore(0x20, _BALANCES_POSITION)
+            let senderSlot := keccak256(0x0, 0x40)
 
-            // The position of the _balances mapping is the value of the constant _BALANCES_POSITION.
-            // Store this position in memory at position 0x20.
-            sstore(0x20, _BALANCES_POSITION)
-            // Hash the sender's address and the _balances position together to get the storage slot for the sender's balance.
-            // Store the result in a variable named 'senderSlot'.
-            let slot := keccak256(0x00, 0x40) 
-            // Load the value from the computed storage slot.
-            // This value is the balance of the sender.
-            // Store the result in a variable named 'senderBalance'.
-            let senderBal := sload(slot)
-            // Check that the sender's balance is greater than or equal to the amount to transfer.
-            // If it is not, revert the transaction. Use the 'lt' (less than) operation to compare the balance and the amount.
-            // Then, use the 'jumpi' operation to conditionally jump to a failure label if the balance is not sufficient.
+            // Load the sender's balance from storage
+            let senderBal := sload(senderSlot)
+
+            // Revert the transaction if the sender does not have enough balance
             if lt(senderBal, amount) {
                 revert(0, 0)
             }
-            // Subtract the transfer amount from the sender's balance.
-            // Store the updated balance back into the sender's balance storage slot.
-            let updatedSenderBal := sub(senderBal, amount)
-            sstore(slot, updatedSenderBal)
 
-            // Repeat similar steps to calculate the storage slot for the recipient's balance,
-            // load the recipient's balance, add the transfer amount to it, and store the updated balance back into storage.
-            
-            // Return true at the end of the function to indicate success.
+            // Subtract the amount from the sender's balance and store the updated balance
+            let updatedSenderBal := sub(senderBal, amount)
+            sstore(senderSlot, updatedSenderBal)
+
+            // Hash the recipient's address with the balances position to get the storage slot
+            mstore(0x0, recipient)
+            mstore(0x20, _BALANCES_POSITION)
+            let recipientSlot := keccak256(0x0, 0x40)
+
+            // Load the recipient's balance, add the amount, and store the updated balance
+            let recipientBal := sload(recipientSlot)
+            sstore(recipientSlot, add(recipientBal, amount))
         }
+
+        // Indicate that the transfer was successful
+        return true;
+    }   
+    /*  
+        1. Get the address of the token owner, i.e., the caller of this function.
+        2. Store the token owner's address, the spender's address, and the _ALLOWANCES_POSITION constant in suitable memory slots.
+        3. Hash the token owner's address, the spender's address, and the _ALLOWANCES_POSITION together to get the storage slot for the allowance.
+        4. Store the amount into the calculated allowance slot.
+    */
+    function approve(address spender, uint256 amount) public returns (bool) {
+        assembly {
+            // 1. You need the 'caller' function to get the address of the current function invoker (token holder)
+            // Store this address in a suitable memory slot.
+            let owner := caller()
+            // 2. Store the `spender` address and the _ALLOWANCES_POSITION constant in suitable memory slots.
+            mstore(0x00, owner) // caller address
+            mstore(0x20, spender)
+            mstore(0x40, _ALLOWANCES_POSITION)
+            // 3. Hash the token holder's address, the `spender` address, and _ALLOWANCES_POSITION together 
+            let slot := keccak256(0x00, 0x60)
+            // 4. Store the `amount` into the allowance slot obtained in the previous step.
+            sstore(slot, amount)
+            // 5. Emit the Approval event (You may skip this step as handling events in assembly is complex)
+        }
+        return true;
     }
+
+     /*
+        Assembly logic:
+        1. Calculate the storage slot for the allowance of the `spender` for `owner`'s tokens.
+        2. This involves hashing the `owner`'s address, `spender`'s address, and the _ALLOWANCES_POSITION together.
+        3. Load the allowance from the computed slot.
+        4. Return the loaded value.
+    */
+    function allowance(address owner, address spender) public view returns (uint256) {
+        uint256 remaining;
+        assembly {
+            // Store the `owner` address, `spender` address, and _ALLOWANCES_POSITION constant in suitable memory slots.
+            // Compute the storage slot by hashing these together.
+            // Load the allowance from the computed storage slot.
+        }
+        return remaining;
+    }
+
+
 }
