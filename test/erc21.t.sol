@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import "../src/ERC21.sol";
+import "../src/erc21.sol";
 
 contract ERC20AssemblyTest is Test {
     ERC21 private _token;
