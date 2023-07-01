@@ -16,7 +16,6 @@ Storage Layout:
 pragma solidity ^0.8.0;
 
 contract ERC21 {
-    mapping(address => uint256) private _balances;
     uint256 private constant _BALANCES_POSITION = 0x02;
     uint256 private _totalSupply;
 
@@ -33,9 +32,7 @@ contract ERC21 {
             let callerAddress := caller() // Retrieve the address of the contract creator.
             mstore(0x0, callerAddress) // Store the address in memory.
             mstore(0x20, _BALANCES_POSITION) // Store the storage slot number for balances mapping in memory.
-
             let slot := keccak256(0x0, 0x40) // Compute the slot for the balance of the contract creator.
-
             sstore(slot, initialSupply) // Store the initial supply at the computed slot.
         }
     }
@@ -56,24 +53,11 @@ contract ERC21 {
     function balanceOf(address account) public view returns (uint256) {
         uint256 accountBalance;
         assembly {
-            // The 'account' parameter is the key in the mapping
-            // TODO: Store this key in memory at position 0
             mstore(0x00, account)
-            // The position of the _balances mapping is the value of the constant _BALANCES_POSITION
-            // TODO: Store this position in memory at position 0x20
-            mstore(0x20, _BALANCES_POSITION) 
-            // TODO: Hash the key and the position together to get the storage slot
-            // This operation is equivalent to what the EVM does behind the scenes when we use a mapping
-            // Store the result in a variable named 'slot'
+            mstore(0x20, _BALANCES_POSITION)
             let slot := keccak256(0x00, 0x40) // payload from 0x00 with size 0x40 (64 bytes)
-
-            // TODO: Load the value from the computed storage slot
-            // This value is the balance of the 'account'
-            // Store the result in the 'balance' variable
             accountBalance := sload(slot)
-
         }
-        // TODO: Return the balance
         return accountBalance;
     }
 
@@ -86,32 +70,27 @@ contract ERC21 {
     */
     function transfer(address recipient, uint256 amount) public returns (bool) {
         assembly {
-            // The 'caller' operation gives the address of the sender.
-            // Store this address in memory at position 0x0.
+            let sender := caller()
 
-            // The position of the _balances mapping is the value of the constant _BALANCES_POSITION.
-            // Store this position in memory at position 0x20.
+            let senderSlot := keccak256(add(sender, _BALANCES_POSITION), 0x40)
+            let senderBalance := sload(senderSlot)
 
-            // Hash the sender's address and the _balances position together to get the storage slot for the sender's balance.
-            // Store the result in a variable named 'senderSlot'.
+            if lt(senderBalance, amount) {
+                revert(0, 0)
+            }
 
-            // Load the value from the computed storage slot.
-            // This value is the balance of the sender.
-            // Store the result in a variable named 'senderBalance'.
+            let newSenderBalance := sub(senderBalance, amount)
+            sstore(senderSlot, newSenderBalance)
 
-            // Check that the sender's balance is greater than or equal to the amount to transfer.
-            // If it is not, revert the transaction. Use the 'lt' (less than) operation to compare the balance and the amount.
-            // Then, use the 'jumpi' operation to conditionally jump to a failure label if the balance is not sufficient.
+            let recipientSlot := keccak256(add(recipient, _BALANCES_POSITION), 0x40)
+            let recipientBalance := sload(recipientSlot)
 
-            // Subtract the transfer amount from the sender's balance.
-            // Store the updated balance back into the sender's balance storage slot.
+            let newRecipientBalance := add(recipientBalance, amount)
+            sstore(recipientSlot, newRecipientBalance)
 
-            // Repeat similar steps to calculate the storage slot for the recipient's balance,
-            // load the recipient's balance, add the transfer amount to it, and store the updated balance back into storage.
-
-            // Return true at the end of the function to indicate success.
+            mstore(0, 1) // Return true
+            return(0, 0x20)
         }
     }
-
 
 }
