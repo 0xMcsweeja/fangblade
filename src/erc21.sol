@@ -70,36 +70,37 @@ contract ERC21 {
     */
     function transfer(address recipient, uint256 amount) public returns (bool) {
         assembly {
-            // The 'caller' operation gives the address of the sender.
-            // Store this address in memory at position 0x0.
+            // Get the address of the sender
             let senderAdr := caller()
-            sstore(0x00, senderAdr)
+            
+            // Hash the sender's address with the balances position to get the storage slot
+            mstore(0x0, senderAdr)
+            mstore(0x20, _BALANCES_POSITION)
+            let senderSlot := keccak256(0x0, 0x40)
 
-            // The position of the _balances mapping is the value of the constant _BALANCES_POSITION.
-            // Store this position in memory at position 0x20.
-            sstore(0x20, _BALANCES_POSITION)
-            // Hash the sender's address and the _balances position together to get the storage slot for the sender's balance.
-            // Store the result in a variable named 'senderSlot'.
-            let slot := keccak256(0x00, 0x40) 
-            // Load the value from the computed storage slot.
-            // This value is the balance of the sender.
-            // Store the result in a variable named 'senderBalance'.
-            let senderBal := sload(slot)
-            // Check that the sender's balance is greater than or equal to the amount to transfer.
-            // If it is not, revert the transaction. Use the 'lt' (less than) operation to compare the balance and the amount.
-            // Then, use the 'jumpi' operation to conditionally jump to a failure label if the balance is not sufficient.
+            // Load the sender's balance from storage
+            let senderBal := sload(senderSlot)
+
+            // Revert the transaction if the sender does not have enough balance
             if lt(senderBal, amount) {
                 revert(0, 0)
             }
-            // Subtract the transfer amount from the sender's balance.
-            // Store the updated balance back into the sender's balance storage slot.
-            let updatedSenderBal := sub(senderBal, amount)
-            sstore(slot, updatedSenderBal)
 
-            // Repeat similar steps to calculate the storage slot for the recipient's balance,
-            // load the recipient's balance, add the transfer amount to it, and store the updated balance back into storage.
-            
-            // Return true at the end of the function to indicate success.
+            // Subtract the amount from the sender's balance and store the updated balance
+            let updatedSenderBal := sub(senderBal, amount)
+            sstore(senderSlot, updatedSenderBal)
+
+            // Hash the recipient's address with the balances position to get the storage slot
+            mstore(0x0, recipient)
+            mstore(0x20, _BALANCES_POSITION)
+            let recipientSlot := keccak256(0x0, 0x40)
+
+            // Load the recipient's balance, add the amount, and store the updated balance
+            let recipientBal := sload(recipientSlot)
+            sstore(recipientSlot, add(recipientBal, amount))
         }
-    }
+
+        // Indicate that the transfer was successful
+        return true;
+    }   
 }
