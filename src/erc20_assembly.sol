@@ -9,18 +9,20 @@ This project serves as a learning tool to understand low-level Ethereum Virtual 
 - [x] `transfer`
 - [x] `totalSupply`
 - [x] `approve`
-- [ ] `allowance`
+- [x] `allowance`
 - [ ] `transferFrom`
 - [ ] `increaseAllowance`
 - [ ] `decreaseAllowance`
 
 Storage Layout:
--------------------
-|   Slot   |  Description  |
-|----------|---------------|
-|   0x00   |   Balances    |
-|   0x01   | Total Supply  |
--------------------
+-------------------------------------
+|   Slot   |  Description            |
+|----------|-------------------------|
+|   0x00   | (unused)                |
+|   0x01   | _TOTAL_SUPPLY_POSITION  |
+|   0x02   |   _BALANCES_POSITION    |
+|   0x03   |  _ALLOWANCES_POSITION   |
+--------------------------------------
 */
 pragma solidity ^0.8.0;
 
@@ -147,9 +149,11 @@ contract ERC21 {
     function allowance(address owner, address spender) public view returns (uint256) {
         uint256 remaining;
         assembly {
-            // Store the `owner` address, `spender` address, and _ALLOWANCES_POSITION constant in suitable memory slots.
-            // Compute the storage slot by hashing these together.
-            // Load the allowance from the computed storage slot.
+            mstore(0x00, owner)
+            mstore(0x20, spender)
+            mstore(0x40, _ALLOWANCES_POSITION)
+            let slot := keccak256(0x00, 0x60)
+            remaining := sload(slot)
         }
         return remaining;
     }

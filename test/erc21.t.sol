@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import "../src/erc21.sol";
+import "../src/erc20_assembly.sol";
 
 contract ERC20AssemblyTest is Test {
     ERC21 private _token;
@@ -37,5 +37,28 @@ contract ERC20AssemblyTest is Test {
         // Verify the balances have been updated correctly
         assertEq(_token.balanceOf(address(this)), _initialSupply - transferAmount, "Sender balance not correctly updated after transfer");
         assertEq(_token.balanceOf(_otherAccount), transferAmount, "Recipient balance not correctly updated after transfer");
+    }
+
+    function testApprove() public {
+        uint256 allowanceAmount = 200;
+
+        // Execute approve
+        bool success = _token.approve(_otherAccount, allowanceAmount);
+
+        // Check the approve was successful
+        assert(success);
+        
+        // Verify the allowance has been updated correctly
+        assertEq(_token.allowance(address(this), _otherAccount), allowanceAmount, "Allowance not correctly updated after approve");
+    }
+
+    function testAllowance() public {
+        uint256 allowanceAmount = 200;
+
+        // Execute approve
+        _token.approve(_otherAccount, allowanceAmount);
+
+        // Check the allowance
+        assertEq(_token.allowance(address(this), _otherAccount), allowanceAmount, "Allowance not correctly returned");
     }
 }
