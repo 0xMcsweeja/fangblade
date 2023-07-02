@@ -167,13 +167,65 @@ contract ERC21 {
     6. Finally, add the amount to the recipient's balance and store the updated balance in its slot.
     7. If any of the checks fail, revert the transaction.
     */
-    function transferFrom(address from, address to, uint256 value) public returns (bool) {
+   function transferFrom(address from, address to, uint256 value) public returns (bool) {
     assembly {
-            // TODO: look at solady / solmate first ?
+        // Check the spender's allowance
+        // ------------------------------
+        // 1. Load the caller's address (which is the spender) into a memory slot.
+        // 2. Load the `from` address into another memory slot.
+        // 3. Load the `_ALLOWANCES_POSITION` constant into yet another memory slot.
+        // 4. Calculate the keccak256 hash of the spender's address, the `from` address, and `_ALLOWANCES_POSITION` to get the storage slot of the allowance.
+        // 5. Load the value of the allowance from the computed storage slot.
+        // 6. Check if the loaded allowance is less than `value`. If it is, revert the transaction.
+        mstore(0x00, caller())
+        mstore(0x20, from)
+        mstore(0x40, _ALLOWANCES_POSITION)
+        let spenderSlot := keccak256(0x00, 0x60)
+        // Update the spender's allowance
+        // ------------------------------
+        // 7. If the allowance is sufficient, subtract `value` from the allowance.
+        // 8. Store the updated allowance back to the computed storage slot.
+        let allowanceVal := sload(spenderSlot)
+        if lt(allowanceVal, value) {
+                revert(0, 0)
+        }
+        sstore(spenderSlot, sub(allowanceVal, value))
+
+        // Check and update the `from` address's balance
+        // ----------------------------------------------
+        // 9. Load the `from` address and `_BALANCES_POSITION` into memory slots.
+        // 10. Calculate the keccak256 hash of the `from` address and `_BALANCES_POSITION` to get the storage slot of the `from` address's balance.
+        // 11. Load the balance of the `from` address from the computed storage slot.
+        // 12. Check if the loaded balance is less than `value`. If it is, revert the transaction.
+        // 13. If the balance is sufficient, subtract `value` from the balance.
+        // 14. Store the updated balance back to the computed storage slot.
+        mstore(0x00, from)
+        mstore(0x20, _BALANCES_POSITION)
+        let slot := keccak256(0x00, 0x40)
+        let fromBal := sload(slot)
+            if lt(fromBal, value) {
+                revert(0, 0)
+        }
+        sstore(slot, sub(fromBal, value))
+
+        // Update the `to` address's balance
+        // ---------------------------------
+        // 15. Load the `to` address and `_BALANCES_POSITION` into memory slots.
+        // 16. Calculate the keccak256 hash of the `to` address and `_BALANCES_POSITION` to get the storage slot of the `to` address's balance.
+        // 17. Load the balance of the `to` address from the computed storage slot.
+        // 18. Add `value` to the loaded balance.
+        // 19. Store the updated balance back to the computed storage slot.
+        mstore(0x00, to)
+        let toSlot := keccak256(0x00, 0x40)
+        let toBal := sload(toSlot)
+        sstore(toSlot, add(toBal, value))
+
     }
 
+    // Indicate that the transfer was successful
     return true;
 }
+
 
 
 }
