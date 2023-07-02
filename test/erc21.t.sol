@@ -19,10 +19,12 @@ contract ERC20AssemblyTest is Test {
     function testTransferFrom() public {
         uint256 allowanceAmount = 200;
         uint256 transferAmount = 100;
-
+        _token.mint(_otherAccount, 1000);
         // Approve allowance for other account
         _token.approve(_otherAccount, allowanceAmount);
-
+        vm.startPrank(_otherAccount);
+        _token.increaseAllowance(address(this), 1000);
+        vm.stopPrank();
         // Transfer from this account (token owner) to third account using other account's allowance
         // Note: we need to act as the _otherAccount for the transferFrom call.
         bool success = _token.transferFrom(_otherAccount, _thirdAccount, 100);
@@ -31,7 +33,7 @@ contract ERC20AssemblyTest is Test {
         assert(success);
         
         // Verify the balances and allowance have been updated correctly
-        assertEq(_token.balanceOf(address(this)), _initialSupply - transferAmount, "Token owner balance not correctly updated after transferFrom");
+        assertEq(_token.balanceOf(_otherAccount), _initialSupply - transferAmount, "Token owner balance not correctly updated after transferFrom");
         assertEq(_token.balanceOf(_thirdAccount), transferAmount, "Recipient balance not correctly updated after transferFrom");
         assertEq(_token.allowance(address(this), _otherAccount), allowanceAmount - transferAmount, "Spender allowance not correctly updated after transferFrom");
     }
