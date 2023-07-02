@@ -147,9 +147,11 @@ contract ERC21 {
     function allowance(address owner, address spender) public view returns (uint256) {
         uint256 remaining;
         assembly {
-            // Store the `owner` address, `spender` address, and _ALLOWANCES_POSITION constant in suitable memory slots.
-            // Compute the storage slot by hashing these together.
-            // Load the allowance from the computed storage slot.
+            mstore(0x00, owner)
+            mstore(0x20, spender)
+            mstore(0x40, _ALLOWANCES_POSITION)
+            let slot := keccak256(0x00, 0x60)
+            remaining := sload(slot)
         }
         return remaining;
     }
