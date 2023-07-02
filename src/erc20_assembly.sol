@@ -157,6 +157,23 @@ contract ERC21 {
         }
         return remaining;
     }
+  /*
+    Assembly logic:
+    1. Calculate the storage slots for the allowances, balances of the `from` address, and the recipient.
+    2. Load the allowance of the `spender` for the `from` address and check if it is sufficient for the transfer.
+    3. If so, subtract the amount from the allowance and store the updated allowance in its slot.
+    4. Load the balance of the `from` address and check if it is sufficient for the transfer.
+    5. If so, subtract the amount from the balance and store the updated balance in its slot.
+    6. Finally, add the amount to the recipient's balance and store the updated balance in its slot.
+    7. If any of the checks fail, revert the transaction.
+    */
+    function transferFrom(address from, address to, uint256 value) public returns (bool) {
+    assembly {
+            // TODO: look at solady / solmate first ?
+    }
+
+    return true;
+}
 
 
 }
