@@ -1,31 +1,39 @@
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.9;
 
-contract MyToken {
-    mapping (address => uint256) private _balances;
-    uint256 private _totalSupply;
+import "../lib/open-zeppelin/contracts/token/ERC20/ERC20.sol";
+import "../lib/open-zeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "../lib/open-zeppelin/contracts/security/Pausable.sol";
+import "../lib/open-zeppelin/contracts/access/AccessControl.sol";
+import "../lib/open-zeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
-    function totalSupply() public view returns (uint256) {
-        return _totalSupply;
+contract Mock is ERC20, ERC20Burnable, Pausable, AccessControl, ERC20Permit {
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+
+    constructor() ERC20("Mock", "MOCK") ERC20Permit("Mock") {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(PAUSER_ROLE, msg.sender);
+        _grantRole(MINTER_ROLE, msg.sender);
     }
 
-    function balanceOf(address account) public view returns (uint256) {
-        return _balances[account];
+    function pause() public onlyRole(PAUSER_ROLE) {
+        _pause();
     }
 
-    function transfer(address recipient, uint256 amount) public returns (bool) {
-        require(balanceOf(msg.sender) >= amount, "ERC20: transfer amount exceeds balance");
-        _balances[msg.sender] -= amount;
-        _balances[recipient] += amount;
-        return true;
+    function unpause() public onlyRole(PAUSER_ROLE) {
+        _unpause();
     }
-    
-    // Add the constructor function to mint initial tokens to the deployer
-    constructor(uint256 initialSupply) {
-        _mint(msg.sender, initialSupply);
+
+    function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {
+        _mint(to, amount);
     }
-    
-    function _mint(address account, uint256 amount) internal {
-        _totalSupply += amount;
-        _balances[account] += amount;
+
+    function _beforeTokenTransfer(address from, address to, uint256 amount)
+        internal
+        whenNotPaused
+        override
+    {
+        super._beforeTokenTransfer(from, to, amount);
     }
 }
