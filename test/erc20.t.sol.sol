@@ -30,6 +30,28 @@ contract Mocktest is Test {
         assertEq(token.balanceOf(bob), 100);
     }
 
+    function testBurn() public {
+        uint256 mintAmount = 100;
+        uint256 burnAmount = 50;
+        vm.assume(burnAmount < mintAmount);
+        token.mint(alice, mintAmount);
+        vm.startPrank(alice);
+        token.burn( burnAmount);
+
+        assertEq(token.totalSupply(), mintAmount - burnAmount);
+        assertEq(token.balanceOf(alice), mintAmount - burnAmount);
+    }
+
+    function testBurnFuzz(uint256 mintAmount, uint256 burnAmount) public {
+        vm.assume(burnAmount < mintAmount);
+        token.mint(alice, mintAmount);
+        vm.startPrank(alice);
+        token.burn( burnAmount);
+
+        assertEq(token.totalSupply(), mintAmount - burnAmount);
+        assertEq(token.balanceOf(alice), mintAmount - burnAmount);
+    }
+
     function testApproval() external {
         vm.startPrank(alice);
         token.approve(bob, 100);
