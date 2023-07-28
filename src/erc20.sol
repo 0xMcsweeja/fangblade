@@ -15,8 +15,6 @@ contract Mock is ERC20, ERC20Burnable, Pausable, AccessControl, ERC20Permit {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant KYC_ROLE = keccak256("KYC_ROLE");
 
-    event Transfer(address indexed from, address indexed to, uint256 amount);
-    event Approval(address indexed owner, address indexed spender, uint256 amount);
 
     error InsufficientBalance();
     error InsufficientAllowance();
@@ -30,6 +28,10 @@ contract Mock is ERC20, ERC20Burnable, Pausable, AccessControl, ERC20Permit {
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
         _grantRole(KYC_ROLE, msg.sender);
+    }
+
+    function decimals() public pure override returns (uint8) {
+        return 2;
     }
 
     function pause() public onlyRole(PAUSER_ROLE) {
